@@ -1,0 +1,88 @@
+﻿using PathwayDevTool.Models;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Net.Sockets;
+using System.Text;
+using System.Threading.Tasks;
+
+namespace PathwayDevTool.Services
+{
+    public class MicroserviceDetector
+    {
+        public AppData Detect(string rootPath)
+        {
+            var servicesRoot = Path.Combine(rootPath, "src", "Services");
+            var gatewayRoot = Path.Combine(rootPath, "src", "ApiGateways");
+            var webRoot = Path.Combine(rootPath, "src", "Web");
+
+            if (!Directory.Exists(servicesRoot))
+                throw new DirectoryNotFoundException(
+                    $"Invalid structure: {servicesRoot} not found");
+
+            var services = new List<Microservice>();
+
+            foreach (var csproj in Directory.GetFiles(servicesRoot,"*.csproj",SearchOption.AllDirectories))
+            {
+                if (!IsApiProject(csproj))
+                    continue;
+
+                services.Add(new Microservice
+                {
+                    Name = Path.GetFileNameWithoutExtension(csproj),
+                    ProjectPath = csproj,
+                    Port = GetFreePort()
+                });
+            }
+            var web = new List<Microservice>();
+
+            foreach (var csproj in Directory.GetFiles(webRoot, "*.csproj", SearchOption.AllDirectories))
+            {
+                if (!IsApiProject(csproj))
+                    continue;
+
+                services.Add(new Microservice
+                {
+                    Name = Path.GetFileNameWithoutExtension(csproj),
+                    ProjectPath = csproj,
+                    Port = GetFreePort()
+                });
+            }
+
+            var gateway = new List<Microservice>();
+
+            foreach (var csproj in Directory.GetFiles(gatewayRoot, "*.csproj", SearchOption.AllDirectories))
+            {
+                if (!IsApiProject(csproj))
+                    continue;
+                services.Add(new Microservice
+                {
+                    Name = Path.GetFileNameWithoutExtension(csproj),
+                    ProjectPath = csproj,
+                    Port = GetFreePort()
+                });
+            }
+
+        }
+
+        private static int GetFreePort()
+        {
+            var listener = new TcpListener(
+                System.Net.IPAddress.Loopback, 0);
+
+            listener.Start();
+            var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            listener.Stop();
+
+            return port;
+        }
+        private bool IsApiProject(string csprojPath)
+        {
+            var text = File.ReadAllText(csprojPath);
+
+            return text.Contains("Microsoft.NET.Sdk.Web")
+                || csprojPath.EndsWith(".Api.csproj", StringComparison.OrdinalIgnoreCase);
+        }
+    }
+}

@@ -1,0 +1,6 @@
+C:\Users\levan\OneDrive\Desktop\PathwayDevTool.exe
+C:\Users\levan\OneDrive\Desktop\PathwayDevTool.dll
+C:\Users\levan\OneDrive\Desktop\PathwayDevTool.deps.json
+C:\Users\levan\OneDrive\Desktop\PathwayDevTool.runtimeconfig.json
+C:\Users\levan\OneDrive\Desktop\PathwayDevTool.pdb
+C:\Users\levan\OneDrive\Desktop\CommunityToolkit.Mvvm.dll

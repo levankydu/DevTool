@@ -1,0 +1,55 @@
+﻿<UserControl x:Class="PathwayDevTool.Views.MainView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:PathwayDevTool.Views"
+             xmlns:conv="clr-namespace:PathwayDevTool.Converters"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+    <UserControl.Resources>
+        <conv:RunStopTextConverter x:Key="RunStopTextConverter"/>
+    </UserControl.Resources>
+    <Grid>
+        <Grid Margin="16">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Path input -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                <TextBox Width="400"
+         Text="{Binding SolutionPath, UpdateSourceTrigger=PropertyChanged}" />
+
+                <Button Content="Load"
+                    Margin="8,0,0,0"
+                    Command="{Binding LoadCommand}" />
+            </StackPanel>
+
+            <!-- Services list -->
+            <DataGrid Grid.Row="1"
+                  ItemsSource="{Binding Services}"
+                  AutoGenerateColumns="False"
+                  CanUserAddRows="False">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Service"
+                                    Binding="{Binding Name}" />
+
+                    <DataGridTextColumn Header="ProcessID"
+                            Binding="{Binding ProcessId, Mode=TwoWay}" />
+                    <DataGridTemplateColumn Header="Action">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding IsRunning, Converter={StaticResource RunStopTextConverter}}"
+        Command="{Binding DataContext.ToggleCommand,
+                  RelativeSource={RelativeSource AncestorType=UserControl}}"
+        CommandParameter="{Binding}" />
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+    </Grid>
+</UserControl>
