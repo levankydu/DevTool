@@ -5,7 +5,21 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PathwayDevTool" xmlns:view="clr-namespace:PathwayDevTool.Views"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
-    <view:MainView />
+        Title="Pathway Dev Tool" 
+        Height="450" Width="800"
+        Icon="Assets/icon.ico">
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Menu -->
+        <view:MenuView Grid.Row="0"/>
+
+        <!-- Main Content -->
+        <view:MainView Grid.Row="1"/>
+    </Grid>
 
 </Window>

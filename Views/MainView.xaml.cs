@@ -1,4 +1,6 @@
-﻿using PathwayDevTool.ViewModels;
+﻿using PathwayDevTool.Models;
+using PathwayDevTool.ViewModels;
+using System.Windows.Data;
 
 namespace PathwayDevTool.Views
 {
@@ -11,6 +13,21 @@ namespace PathwayDevTool.Views
         {
             InitializeComponent();
             DataContext = new MainViewModel();
+        }
+        private void RunningServices_Filter(object sender, FilterEventArgs e)
+        {
+            if (e.Item is Microservice svc)
+            {
+                e.Accepted = svc.IsRunning;
+            }
+        }
+
+        private void StoppedServices_Filter(object sender, FilterEventArgs e)
+        {
+            if (e.Item is Microservice svc)
+            {
+                e.Accepted = !svc.IsRunning;
+            }
         }
     }
 }

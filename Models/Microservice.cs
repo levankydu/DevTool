@@ -3,24 +3,23 @@ using System.Diagnostics;
 
 namespace PathwayDevTool.Models
 {
-    public class Microservice: ObservableObject
+    public partial class Microservice : ObservableObject
     {
-        public string? Name { get; set; }
-        public string? ProjectPath { get; set; }
 
-        private int port;
-        public int ProcessId
-        {
-            get => port;
-            set => SetProperty(ref port, value);
-        }
+        [ObservableProperty]
+        private string? name;
 
-        private bool isRunning;
-        public bool IsRunning
-        {
-            get => isRunning;
-            set => SetProperty(ref isRunning, value);
-        }
+        [ObservableProperty]
+        private string? projectPath;
+
+        [ObservableProperty]
+        private int processId = 0;
+
+        [ObservableProperty]
+        private bool isRunning = false;
+
+        [ObservableProperty]
+        public bool isStarting = false;
 
         public Process? Process { get; set; }
     }
