@@ -27,15 +27,15 @@
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="⏸ Services" VerticalAlignment="Center"/>
-                        <Border Background="#E0E0E0"
+                        <TextBlock  Text="📋 Services" VerticalAlignment="Center" Foreground="#2196F3"/>
+                        <Border Background="#2196F3"
                                 CornerRadius="10"
                                 Padding="6,2"
                                 Margin="8,0,0,0">
                             <TextBlock Text="{Binding StoppedServicesView.Count}"
                                        FontSize="11"
                                        FontWeight="Bold"
-                                       Foreground="#616161"/>
+                                       Foreground="White"/>
                         </Border>
                     </StackPanel>
                 </TabItem.Header>
@@ -91,7 +91,7 @@
             <TabItem>
                 <TabItem.Header>
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="▶ Running" VerticalAlignment="Center" Foreground="#4CAF50"/>
+                        <TextBlock Text="🏗 Running" VerticalAlignment="Center" Foreground="#4CAF50"/>
                         <Border Background="#4CAF50"
                                 CornerRadius="10"
                                 Padding="6,2"

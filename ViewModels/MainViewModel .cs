@@ -256,17 +256,20 @@ namespace PathwayDevTool.ViewModels
             try
             {
                 var port = GetPortFromLaunchSettings(svc.ProjectPath);
-
+                if (IsPortOpen("localhost", port))
+                {
+                    throw new Exception($"Service '{svc.Name}' cannot start. Port {port} is already in use.");
+                }
                 process = StartDotnetProcess(svc.ProjectPath);
                 if (process == null)
-                    throw new InvalidOperationException("Failed to start dotnet process.");
+                    throw new Exception("Failed to start dotnet process.");
 
                 AttachProcessExitHandler(process, svc);
 
                 var isReady = await WaitForPort(process, svc.Name, port);
 
                 if (!isReady)
-                    throw new TimeoutException($"Service '{svc.Name}' failed to start.");
+                    throw new Exception($"Service '{svc.Name}' failed to start.");
 
                 svc.IsRunning = true;
                 svc.Process = process;
@@ -281,12 +284,9 @@ namespace PathwayDevTool.ViewModels
             }
             catch (Exception ex)
             {
-                Debug.WriteLine($"✗ [{svc.Name}] Start failed: {ex.Message}");
-
                 SafeStopProcess(process);
-
                 System.Windows.MessageBox.Show(
-                    $"Service '{svc.Name}' failed to start.\n\n{ex.Message}",
+                    $"{ex.Message}",
                     "Service Start Failed",
                     System.Windows.MessageBoxButton.OK,
                     System.Windows.MessageBoxImage.Warning);
@@ -310,8 +310,8 @@ namespace PathwayDevTool.ViewModels
                 UseShellExecute = false,
                 CreateNoWindow = true
             };
-
-            return Process.Start(psi);
+            var process = Process.Start(psi);
+            return process;
         }
 
         private static void AttachProcessExitHandler(Process process, Microservice svc)
