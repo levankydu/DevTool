@@ -1,0 +1,29 @@
+# ===== Visual Studio =====
+.vs/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# ===== Build output =====
+bin/
+obj/
+[Bb]in/
+[Oo]bj/
+
+# ===== .NET =====
+*.dll
+*.exe
+*.pdb
+
+# ===== Publish =====
+Properties/PublishProfiles/*.user
+
+# ===== Temp / backup =====
+*~
+*.tmp
+*.bak
+
+# ===== OS =====
+.DS_Store
+Thumbs.db
