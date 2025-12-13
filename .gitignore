@@ -27,3 +27,6 @@ Properties/PublishProfiles/*.user
 # ===== OS =====
 .DS_Store
 Thumbs.db
+
+# Publish profiles
+Properties/PublishProfiles/
