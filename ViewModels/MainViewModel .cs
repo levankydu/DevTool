@@ -7,6 +7,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Diagnostics;
 using System.IO;
+using System.Net.Sockets;
 using System.Windows.Data;
 using System.Windows.Input;
 
@@ -256,11 +257,11 @@ namespace PathwayDevTool.ViewModels
             try
             {
                 var port = GetPortFromLaunchSettings(svc.ProjectPath);
-                if (IsPortOpen("localhost", port))
+                if (await IsPortOpen("localhost", port))
                 {
                     throw new Exception($"Service '{svc.Name}' cannot start. Port {port} is already in use.");
                 }
-                process = StartDotnetProcess(svc.ProjectPath);
+                process = StartDotnetProcess(svc.ProjectPath, port);
                 if (process == null)
                     throw new Exception("Failed to start dotnet process.");
 
@@ -274,13 +275,6 @@ namespace PathwayDevTool.ViewModels
                 svc.IsRunning = true;
                 svc.Process = process;
                 svc.ProcessId = process.Id;
-
-                Debug.WriteLine($"✓ [{svc.Name}] Service started successfully!");
-
-                System.Windows.Application.Current?.Dispatcher.Invoke(() =>
-                {
-                    SelectedTabIndex = 1;
-                });
             }
             catch (Exception ex)
             {
@@ -297,21 +291,81 @@ namespace PathwayDevTool.ViewModels
             }
         }
 
-        private static Process? StartDotnetProcess(string? projectPath)
+        private static Process? StartDotnetProcess(string? projectPath, int port)
         {
             if (string.IsNullOrWhiteSpace(projectPath))
                 return null;
 
+            var projectDir = Path.GetDirectoryName(projectPath)!;
+            var projectName = Path.GetFileNameWithoutExtension(projectPath);
+            var buildDir = Path.Combine(projectDir, "bin", "Debug");
+            if (!IsProjectBuilt(buildDir, projectName))
+            {
+                if (!BuildProject(projectPath))
+                    return null;
+            }
+
+            return StartProcessWithBinary(projectDir, buildDir, projectName, port);
+        }
+
+        private static bool IsProjectBuilt(string buildDir, string projectName)
+        {
+            if (!Directory.Exists(buildDir))
+                return false;
+
+            return Directory.EnumerateFiles(buildDir, $"{projectName}.exe", SearchOption.AllDirectories).Any() ||
+                   Directory.EnumerateFiles(buildDir, $"{projectName}.dll", SearchOption.AllDirectories).Any();
+        }
+
+        private static bool BuildProject(string projectPath)
+        {
+            var buildInfo = new ProcessStartInfo("dotnet", $"build \"{projectPath}\" -c Debug")
+            {
+                UseShellExecute = false,
+                CreateNoWindow = false,
+                WindowStyle = ProcessWindowStyle.Hidden
+            };
+
+            using var buildProcess = Process.Start(buildInfo);
+            if (buildProcess is null)
+                return false;
+
+            buildProcess.WaitForExit();
+            return buildProcess.ExitCode == 0;
+        }
+
+        private static Process? StartProcessWithBinary(string projectDir, string buildDir, string projectName, int port)
+        {
+            var exePath = Directory.EnumerateFiles(buildDir, $"{projectName}.exe", SearchOption.AllDirectories).FirstOrDefault();
+            var dllPath = Directory.EnumerateFiles(buildDir, $"{projectName}.dll", SearchOption.AllDirectories).FirstOrDefault();
+
             var psi = new ProcessStartInfo
             {
-                FileName = "dotnet",
-                Arguments = $"run --project \"{projectPath}\"",
-                WorkingDirectory = Path.GetDirectoryName(projectPath),
+                WorkingDirectory = projectDir,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                EnvironmentVariables =
+                {
+                    ["ASPNETCORE_ENVIRONMENT"] = "Development",
+                    ["ASPNETCORE_URLS"] = $"http://localhost:{port}"
+                }
             };
-            var process = Process.Start(psi);
-            return process;
+
+            if (!string.IsNullOrEmpty(exePath))
+            {
+                psi.FileName = exePath;
+            }
+            else if (!string.IsNullOrEmpty(dllPath))
+            {
+                psi.FileName = "dotnet";
+                psi.Arguments = $"\"{dllPath}\"";
+            }
+            else
+            {
+                return null;
+            }
+
+            return Process.Start(psi);
         }
 
         private static void AttachProcessExitHandler(Process process, Microservice svc)
@@ -353,7 +407,7 @@ namespace PathwayDevTool.ViewModels
                     return 5000;
 
                 var projectDir = Path.GetDirectoryName(projectPath);
-                var launchSettingsPath = Path.Combine(projectDir, "Properties", "launchSettings.json");
+                var launchSettingsPath = Path.Combine(projectDir!, "Properties", "launchSettings.json");
 
                 if (!File.Exists(launchSettingsPath))
                     return 5000;
@@ -387,7 +441,7 @@ namespace PathwayDevTool.ViewModels
                     return false;
                 }
 
-                if (IsPortOpen("localhost", port))
+                if (await IsPortOpen("localhost", port))
                 {
                     Debug.WriteLine($"[{serviceName}] Port {port} is now open!");
                     return true;
@@ -400,24 +454,29 @@ namespace PathwayDevTool.ViewModels
             return false;
         }
 
-        private static bool IsPortOpen(string host, int port)
+        private static async Task<bool> IsPortOpen(string host, int port, int timeoutMs = 5000)
         {
             try
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                var result = client.BeginConnect(host, port, null, null);
-                var success = result.AsyncWaitHandle.WaitOne(TimeSpan.FromMilliseconds(100));
+                using var client = new TcpClient();
+                using var cts = new CancellationTokenSource(timeoutMs);
 
-                if (success)
-                {
-                    client.EndConnect(result);
-                    return true;
-                }
-
+                await client.ConnectAsync(host, port, cts.Token);
+                return true;
+            }
+            catch (OperationCanceledException)
+            {
+                Console.WriteLine($"Timeout connecting to {host}:{port}");
                 return false;
             }
-            catch
+            catch (SocketException ex)
             {
+                Console.WriteLine($"Connection refused: {ex.Message}");
+                return false;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error: {ex.Message}");
                 return false;
             }
         }
@@ -470,10 +529,8 @@ namespace PathwayDevTool.ViewModels
         private async Task StartAllAsync()
         {
             var stoppedServices = Services.Where(s => !s.IsRunning).ToList();
-            foreach (var service in stoppedServices)
-            {
-                await RunServiceAsync(service);
-            }
+            await Task.WhenAll(stoppedServices.Select(RunServiceAsync));
+
         }
         private bool CanStartAll()
         {
