@@ -6,7 +6,7 @@
         xmlns:local="clr-namespace:PathwayDevTool" xmlns:view="clr-namespace:PathwayDevTool.Views"
         mc:Ignorable="d"
         Title="Pathway Dev Tool" 
-        Height="450" Width="800"
+        Height="400" Width="870"
         Icon="Assets/icon.ico">
 
     <Grid>

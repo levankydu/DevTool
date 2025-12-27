@@ -22,6 +22,12 @@ namespace PathwayDevTool.Models
         public bool isStarting = false;
 
         public Process? Process { get; set; }
+
+        [ObservableProperty]
+        private string consoleOutput = "Waiting for output...";
+
+        [ObservableProperty]
+        private bool isConsoleVisible;
     }
 
 }

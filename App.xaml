@@ -12,6 +12,7 @@
                 <Setter Property="FontSize" Value="14"/>
                 <Setter Property="Cursor" Value="Hand"/>
                 <Setter Property="Background" Value="#4CAF50"/>
+                
                 <Setter Property="Template">
                     <Setter.Value>
                         <ControlTemplate TargetType="Button">
@@ -39,7 +40,6 @@
                     </Setter.Value>
                 </Setter>
                 <Style.Triggers>
-                    <!-- Khi Content = "Stop" thì đổi sang đỏ -->
                     <Trigger Property="Content" Value="Stop">
                         <Setter Property="Background" Value="#F44336"/>
                     </Trigger>
@@ -97,6 +97,12 @@
                             ShadowDepth="2"/>
                     </Setter.Value>
                 </Setter>
+                <Style.Triggers>
+                    <Trigger Property="IsSelected" Value="True">
+                        <Setter Property="Background" Value="#2196F3"/>
+                        <Setter Property="Foreground" Value="White"/>
+                    </Trigger>
+                </Style.Triggers>
             </Style>
 
             <Style TargetType="DataGridColumnHeader">
